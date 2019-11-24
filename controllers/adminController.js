@@ -10,7 +10,7 @@ exports.createNewUser = (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.log(errors.array());
-        return res.status(422).json({ error: errors.array()[0].msg })
+        return res.status(422).json({ error: errors.array() })
     }
     let { email } = req.body;
 
@@ -49,4 +49,7 @@ exports.createNewUser = (req, res) => {
     })
 }
 
+// exports.Signin = (req, res) =>{
+
+// }
 
