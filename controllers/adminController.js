@@ -49,7 +49,54 @@ exports.createNewUser = (req, res) => {
     })
 }
 
-// exports.Signin = (req, res) =>{
+exports.createLogin = (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors.array());
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
+    const { email, password } = req.body;
 
-// }
+    pool.query('SELECT hash FROM users WHERE email = $1', [email], (error, results) => {
+        if (error) {
+            res.status(401).json({
+                status: "Error",
+                message: "Error getting user"
+            })
+        }
+
+        bcrypt.compare(password, results.rows[0].hash).then(valid => {
+            if (valid) {
+
+                return pool.query('SELECT * FROM users', (error, results) => {
+                    const token = jwt.sign({ userId: results.rows[0].id },
+                        process.env.TOKEN_SECRET,
+                        { expiresIn: '6h' }
+                    )
+
+                    res.status(200).json({
+                        status: "Signin Successful",
+                        data: {
+                            token: token,
+                            userId: results.rows[0].id
+                        }
+                    })
+                })
+
+            } else {
+                res.status(404).json({
+                    status: "Error",
+                    message: "Password Mismatch"
+                })
+            }
+        }).catch(err => {
+            res.status(500).json({
+                status: "Error",
+                message: "Wrong Credentials"
+            })
+        })
+
+
+    })
+}
 
