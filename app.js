@@ -10,7 +10,7 @@ app.use(bodyParser.json());
 
 
 const adminRoute = require('./routes/adminRoutes');
-
+const articleRoute = require('./routes/articlesRoutes');
 
 
 app.options('/*', (req, res) => {
@@ -30,6 +30,8 @@ app.get('/', (req, res) => {
 
 //Routes For Available Resources //
 app.use('/api/v1', adminRoute);
+
+app.use('/api/v1', articleRoute);
 
 
 
