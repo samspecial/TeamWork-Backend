@@ -58,3 +58,24 @@ exports.updateArticle = (req, res) => {
         })
     })
 }
+
+exports.deleteArticle = (req, res) => {
+    const articleid = parseInt(req.params.articleid);
+    const deleteQuery = 'DELETE FROM articles WHERE articleid = $1';
+    value = [articleid];
+
+    pool.query(deleteQuery, value, (error, results) => {
+        if (error) {
+            res.status(403).json({
+                status: error,
+                message: "Unauthorized"
+            })
+        }
+        res.status(200).json({
+            status: "Success",
+            data: {
+                message: "Article Successsfully Deleted"
+            }
+        })
+    })
+}
