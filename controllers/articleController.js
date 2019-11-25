@@ -79,3 +79,19 @@ exports.deleteArticle = (req, res) => {
         })
     })
 }
+
+exports.feed = (req, res) => {
+    const feedQuery = 'SELECT a.articleid AS id, a.title, a.article, a.createdon FROM articles a UNION SELECT g.gifid, g.title, g.imageurl, g.createdon FROM gifs g ORDER BY (createdon) DESC'
+    pool.query(feedQuery, (error, results) => {
+        if (error) {
+            throw error
+        }
+        res.status(200).json({
+            status: "Success",
+            data: results.rows
+        })
+
+
+    }
+    )
+}
