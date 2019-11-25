@@ -31,3 +31,30 @@ exports.createArticle = (req, res) => {
     })
 }
 
+exports.updateArticle = (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(errors.array());
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
+    const articleid = parseInt(req.params.articleid);
+    const { article, title } = req.body;
+    const articleQuery = 'UPDATE articles SET title = $1, article = $2 WHERE articleid = $3';
+    const values = [title, article, articleid];
+    pool.query(articleQuery, values, (error, results) => {
+        if (error) {
+            res.status(401).json({
+                status: "Failed",
+                error: "Bad request"
+            })
+        }
+        res.status(201).json({
+            status: "Success",
+            data: {
+                message: "Article Successfully Updated",
+                title: `${title}`,
+                article: `${article}`
+            }
+        })
+    })
+}
