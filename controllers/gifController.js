@@ -1,67 +1,57 @@
 const pool = require('../config')
 require('dotenv').config()
 const jwt = require('jsonwebtoken');
-const cloudinary = require('cloudinary').v2
-
-const { validationResult } = require('express-validator');
-
+const upload = require('../middleware/multer-config');
+const cloudinary = require('cloudinary').v2;
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
 })
-
-const createGif = async (req, res) => {
+const createGif = (req, res) => {
     let status = {};
     const { title } = req.body;
-    const file = req.files.gif;
-
-
-    if (file.mimetype !== 'image/gif') {
-        return res.status(403).json({
-            status: "Error",
-            error: "Please upload a GIF file"
-        })
-    }
-    const gifUrl = cloudinary.uploader.upload(file.tempFilePath, (error, result) => {
-        if (error) {
-            return res.status(400).json({
-                status: "error",
-                error: "Please upload a GIF file"
+    upload(req, res, (err) => {
+        const file = req.file;
+        if (err) {
+            return res.send(err)
+        } else if (file.mimetype !== 'image/gif') {
+            return res.send({
+                status: 'Error',
+                message: 'Only GIF images allowed'
             })
-
         }
-        return result;
-    })
-    const imageurl = gifUrl.secure_url;
-    const publicid = gifUrl.public_id;
-
-    const gifQuery = {
-        text: 'INSERT INTO gifs ("title", "imageurl","gifid") VALUES($1,$2, $3) RETURNING *',
-        values: [title, imageurl, gifidd]
-    };
-    await pool.query(gifQuery, (error, results) => {
-        if (error) {
-            res.status(500).json({
-                error: "error",
-                error: "Internal server error"
-            })
-        } else {
-            const { gifid, createdon } = results.rows[0]
-            res.status(200).json({
-                status: "Success",
-                data: {
-                    gifid,
-                    message: "GIF image successfully posted",
-                    createdon,
-                    title,
-                    imageurl
+        cloudinary.uploader.upload(file.path, (error, result) => {
+            if (error) return res.send(error)
+            const imageurl = result.secure_url;
+            const publicid = result.public_id;
+            console.log(imageurl, publicid)
+            const gifQuery = {
+                text: 'INSERT INTO gifs ("imageurl", "title") VALUES($1,$2) RETURNING *',
+                values: [imageurl, title]
+            };
+            pool.query(gifQuery, (error, results) => {
+                if (error) {
+                    res.status(500).json({
+                        error: "error",
+                        error: "Internal server error"
+                    })
+                } else {
+                    const { gifid, createdon } = results.rows[0]
+                    res.status(200).json({
+                        status: "Success",
+                        data: {
+                            gifid,
+                            message: "GIF image successfully posted",
+                            createdon,
+                            title,
+                            imageurl
+                        }
+                    })
                 }
             })
-        }
+        })
     })
-
-
 }
 
 module.exports = {
