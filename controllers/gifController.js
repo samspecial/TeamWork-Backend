@@ -11,6 +11,7 @@ cloudinary.config({
 const createGif = (req, res) => {
     let status = {};
     const { title } = req.body;
+    const createdon = new Date();
     upload(req, res, (err) => {
         const file = req.file;
         if (err) {
@@ -27,8 +28,8 @@ const createGif = (req, res) => {
             const publicid = result.public_id;
             console.log(imageurl, publicid)
             const gifQuery = {
-                text: 'INSERT INTO gifs ("imageurl", "title") VALUES($1,$2) RETURNING *',
-                values: [imageurl, title]
+                text: 'INSERT INTO gifs ("imageurl", "publicid","title", "createdon") VALUES($1,$2,$3,$4) RETURNING *',
+                values: [imageurl, publicid, title, createdon]
             };
             pool.query(gifQuery, (error, results) => {
                 if (error) {
@@ -45,7 +46,8 @@ const createGif = (req, res) => {
                             message: "GIF image successfully posted",
                             createdon,
                             title,
-                            imageurl
+                            imageurl,
+                            publicid
                         }
                     })
                 }
@@ -53,7 +55,55 @@ const createGif = (req, res) => {
         })
     })
 }
+const deleteGif = async (req, res) => {
+    let status = {}, { gifid } = req.params
+    const query1 = {
+        text: 'SELECT * FROM gifs WHERE gifid = $1',
+        values =[gifid]
+    }
+    await pool.query(query1, async (error, results) => {
+        if (error) {
+            status = {
+                status: "Error",
+                message: "Internal Server Error"
+            }
+            return res.status(500).json(status)
+        }
+        const { imageurl, publicid } = results.rows[0]
+        await cloudinary.uploader.destroy([publicid], async (error, result) => {
+            if (error) {
+                status = {
+                    status: "Error",
+                    message: "Error fetching files"
+                }
+                return res.status(500).json(status)
+            }
+            const query2 = {
+                text: 'DELETE FROM gifs WHERE gifid = $1',
+                values=[gifid]
+            };
+            await pool.query(query2, (error, results) => {
+                if (error) {
+                    status = {
+                        status: "Error",
+                        message: "Internal Server Error"
+                    }
+                    return res.status(500).json(status)
+                } else {
+                    if (error) {
+                        status = {
+                            status: "Success",
+                            message: "GIF image successfully deleted"
+                        }
+                        res.status(200).json(status)
+                    }
+                }
+            })
+        })
 
+    })
+
+}
 module.exports = {
-    createGif,
+    createGif, deleteGif
 }
