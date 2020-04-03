@@ -56,12 +56,13 @@ const createGif = (req, res) => {
     })
 }
 const deleteGif = async (req, res) => {
-    let status = {}, { gifid } = req.params
-    const query1 = {
-        text: 'SELECT * FROM gifs WHERE gifid = $1',
-        values =[gifid]
-    }
-    await pool.query(query1, async (error, results) => {
+    let status = {}, { gifid } = req.params;
+    console.log(gifid)
+
+    const text = 'SELECT * FROM gifs WHERE "gifid" = $1';
+    const values = [gifid];
+
+    await pool.query(text, values, async (error, results) => {
         if (error) {
             status = {
                 status: "Error",
@@ -69,8 +70,9 @@ const deleteGif = async (req, res) => {
             }
             return res.status(500).json(status)
         }
+        console.log(results.rows[0])
         const { imageurl, publicid } = results.rows[0]
-        await cloudinary.uploader.destroy([publicid], async (error, result) => {
+        await cloudinary.uploader.destroy(publicid, async (error, result) => {
             if (error) {
                 status = {
                     status: "Error",
@@ -80,7 +82,7 @@ const deleteGif = async (req, res) => {
             }
             const query2 = {
                 text: 'DELETE FROM gifs WHERE gifid = $1',
-                values=[gifid]
+                values: [gifid]
             };
             await pool.query(query2, (error, results) => {
                 if (error) {
@@ -90,13 +92,11 @@ const deleteGif = async (req, res) => {
                     }
                     return res.status(500).json(status)
                 } else {
-                    if (error) {
-                        status = {
-                            status: "Success",
-                            message: "GIF image successfully deleted"
-                        }
-                        res.status(200).json(status)
+                    status = {
+                        status: "Success",
+                        message: "GIF image successfully deleted"
                     }
+                    res.status(200).json(status)
                 }
             })
         })
