@@ -62,7 +62,7 @@ exports.updateArticle = (req, res) => {
 exports.deleteArticle = (req, res) => {
     const articleid = parseInt(req.params.articleid);
     const deleteQuery = 'DELETE FROM articles WHERE articleid = $1';
-    value = [articleid];
+    const value = [articleid];
 
     pool.query(deleteQuery, value, (error, results) => {
         if (error) {

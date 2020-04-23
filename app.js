@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 
 const adminRoute = require('./routes/adminRoutes');
 const articleRoute = require('./routes/articlesRoutes');
-
+const gifRoute = require('./routes/gifRoutes');
 
 app.options('/*', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -30,8 +30,8 @@ app.get('/', (req, res) => {
 
 //Routes For Available Resources //
 app.use('/api/v1', adminRoute);
-
 app.use('/api/v1', articleRoute);
+app.use('/api/v1', gifRoute);
 
 
 

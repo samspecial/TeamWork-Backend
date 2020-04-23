@@ -22,10 +22,12 @@
   "devDependencies": {
     "eslint": "^6.6.0",
     "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.18.2",
+    "supertest": "^4.0.2"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/eslint"
+    "lint": "./node_modules/.bin/eslint",
+    "test": "mocha ./test --timeout 100000 --exit"
   },
   "repository": {
     "type": "git",
