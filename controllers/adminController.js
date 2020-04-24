@@ -1,11 +1,16 @@
-const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+const nodemailer = require('nodemailer')
+const sendGridTransport = require('nodemailer-sendgrid-transport')
 
 const pool = require('../config');
 const { validationResult } = require('express-validator')
 
+const transporter = nodemailer.createTransport(sendGridTransport({
+    auth: {
+        api_key: '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'
+    }
+}))
 exports.createNewUser = (req, res, next) => {
     let status = {};
     const {
@@ -52,15 +57,24 @@ exports.createNewUser = (req, res, next) => {
                         }
                         res.status(401).json(status)
                     } else {
+                        const { email, firstName, id } = results.rows[0];
                         status = {
                             status: "Success",
                             data: {
                                 message: "Account Successfully Created",
-                                token: "token",
-                                userId: `${results.rows[0].id}`
+                                userId: id
                             }
                         }
-                        res.status(201).json(status)
+                        res.status(200).json(status)
+                        return transporter.sendMail({
+                            to: email,
+                            from: 'admin@teamwork.com',
+                            subject: 'Signup Successfully',
+                            html: `<p>Hello ${firstName}, We are excited to have you signed up for our service. We hope you have a smooth ride and fun here`
+                        }).catch(err => {
+                            console.log(err);
+                        })
+
                     }
                 })
             }).catch(error => {
@@ -73,7 +87,6 @@ exports.createNewUser = (req, res, next) => {
 exports.createLogin = (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        console.log(errors.array());
         return res.status(422).json({ error: errors.array()[0].msg })
     }
     const { email, password } = req.body;
@@ -90,7 +103,6 @@ exports.createLogin = (req, res) => {
                 if (valid) {
                     pool.query('SELECT * FROM users', (error, results) => {
                         const { id } = results.rows[0]
-                        console.log(id)
                         const token = jwt.sign({ userId: id },
                             process.env.TOKEN_SECRET,
                             { expiresIn: '6h' }
