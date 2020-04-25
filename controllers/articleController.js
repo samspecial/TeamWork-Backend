@@ -87,10 +87,15 @@ exports.commentOnArticle = async (req, res) => {
     let id = req.userId;
     const authorid = id
     const createdon = new Date()
+    // const query1 = {
+    //     text: 'SELECT * FROM articles WHERE "articleid" = $1',
+    //     values: [articleid]
+    // };
+
     const query1 = {
-        text: 'SELECT * FROM articles WHERE "articleid" = $1',
-        values: [articleid]
-    };
+        text: 'INSERT INTO comments ("comment","createdon", "authorid") VALUES ($1,$2,$3) WHERE "articleid" = "$4"',
+        values: [comment, createdon, authorid, articleid]
+    }
     await pool.query(query1, async (error, result) => {
         if (error) {
             status = {
@@ -105,9 +110,10 @@ exports.commentOnArticle = async (req, res) => {
             }
             res.status(404).json(status);
         } else {
+            console.log(comment, createdon, authorid, articleid) = result.rows[0]
             const query2 = {
-                text: 'INSERT INTO comments ("comment","articleid","createdon", "authorid") VALUES ($1,$2,$3, $4) RETURNING *',
-                values: [comment, articleid, createdon, authorid]
+                text: 'SELECT a.title, c.createdon, c.comment FROM articles a, comments c WHERE a.commentid = c.commentid;',
+                values: [title, comment, createdon]
             }
             await pool.query(query2, (error, results) => {
                 if (error) {
@@ -117,7 +123,7 @@ exports.commentOnArticle = async (req, res) => {
                     }
                     res.status(500).json(status);
                 } else {
-                    const { commentid, articleid, createdon, comment, title } = results.rows[0]
+                    const { createdon, comment, title } = results.rows
                     status = {
                         status: "Success",
                         message: "Comment Successfuly created",

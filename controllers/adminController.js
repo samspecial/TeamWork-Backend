@@ -8,7 +8,7 @@ const { validationResult } = require('express-validator')
 
 const transporter = nodemailer.createTransport(sendGridTransport({
     auth: {
-        api_key: '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'
+        api_key: process.env.SEND_EMAIL
     }
 }))
 exports.createNewUser = (req, res, next) => {
@@ -25,7 +25,11 @@ exports.createNewUser = (req, res, next) => {
     } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(422).json({ error: errors.array() })
+        let ans = []
+        for (let i = 0; i < errors.array().length; i++) {
+            ans.push(errors.array()[i].msg)
+        }
+        return res.status(422).json({ error: ans })
     }
     const sqlQuery1 = {
         text: 'SELECT * FROM users WHERE email = $1',

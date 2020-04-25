@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
 
-const { check } = require('express-validator')
+const { body } = require('express-validator')
 
 require('dotenv').config();
 const adminRoutes = require('../controllers/adminController');
 
 
-router.post('/create-user', check('email').isEmail().withMessage('Firstname must be greater than three characters'), adminRoutes.createNewUser);
+router.post('/create-user', [body('email').isEmail().withMessage('Email not valid'), body('password', 'Password must be alphanumeric').isAlphanumeric('en-GB'), body('firstName', 'Field can\'t be empty').isLength({ min: 2 }), body('lastName', 'Field can\'t be empty').isLength({ min: 2 }), body('address').isLength({ min: 2 }), body('department').isLength({ min: 2 }),], adminRoutes.createNewUser);
 
 router.post('/signin', adminRoutes.createLogin)
 module.exports = router;
