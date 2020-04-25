@@ -35,12 +35,12 @@ exports.createArticle = async (req, res) => {
 }
 
 exports.updateArticle = (req, res) => {
+    const articleid = parseInt(req.params.articleid);
+    const { article, title } = req.body;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({ error: errors.array()[0].msg })
     }
-    const articleid = parseInt(req.params.articleid);
-    const { article, title } = req.body;
     const articleQuery = 'UPDATE articles SET title = $1, article = $2 WHERE articleid = $3';
     const values = [title, article, articleid];
     pool.query(articleQuery, values, (error, results) => {
@@ -87,6 +87,10 @@ exports.commentOnArticle = async (req, res) => {
     let id = req.userId;
     const authorid = id
     const createdon = new Date()
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
     // const query1 = {
     //     text: 'SELECT * FROM articles WHERE "articleid" = $1',
     //     values: [articleid]
