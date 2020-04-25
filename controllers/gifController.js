@@ -1,6 +1,7 @@
 const pool = require('../config')
 require('dotenv').config()
 const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
 const upload = require('../middleware/multer-config');
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
@@ -11,8 +12,11 @@ cloudinary.config({
 const createGif = (req, res) => {
     let status = {};
     const { title } = req.body;
-    console.log(req.headers.userId)
     const createdon = new Date();
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
     upload(req, res, (err) => {
         const file = req.file;
         if (err) {
@@ -27,7 +31,7 @@ const createGif = (req, res) => {
             if (error) return res.send(error)
             const imageurl = result.secure_url;
             const publicid = result.public_id;
-            console.log(imageurl, publicid)
+
             const gifQuery = {
                 text: 'INSERT INTO gifs ("imageurl", "publicid","title", "createdon") VALUES($1,$2,$3,$4) RETURNING *',
                 values: [imageurl, publicid, title, createdon]
@@ -58,11 +62,8 @@ const createGif = (req, res) => {
 }
 const deleteGif = async (req, res) => {
     let status = {}, { gifid } = req.params;
-    console.log(gifid)
-
     const text = 'SELECT * FROM gifs WHERE "gifid" = $1';
     const values = [gifid];
-
     await pool.query(text, values, async (error, results) => {
         if (error) {
             status = {
@@ -71,7 +72,6 @@ const deleteGif = async (req, res) => {
             }
             return res.status(500).json(status)
         }
-        console.log(results.rows[0])
         const { imageurl, publicid } = results.rows[0]
         await cloudinary.uploader.destroy(publicid, async (error, result) => {
             if (error) {
@@ -110,6 +110,10 @@ const commentOnGif = async (req, res) => {
     let id = req.userId;
     const authorid = id
     const createdon = new Date()
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
     const query1 = {
         text: 'SELECT * FROM gifs WHERE "gifid" = $1',
         values: [gifid]
