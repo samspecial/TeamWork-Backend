@@ -83,13 +83,13 @@ exports.deleteArticle = (req, res) => {
 }
 
 exports.commentOnArticle = async (req, res) => {
-    let status = {}, { comment } = req.body, gifid = parseInt(req.params.gifid);
+    let status = {}, { comment } = req.body, articleid = parseInt(req.params.articleid);
     let id = req.userId;
     const authorid = id
     const createdon = new Date()
     const query1 = {
-        text: 'SELECT * FROM gifs WHERE "gifid" = $1',
-        values: [gifid]
+        text: 'SELECT * FROM articles WHERE "articleid" = $1',
+        values: [articleid]
     };
     await pool.query(query1, async (error, result) => {
         if (error) {
@@ -101,13 +101,13 @@ exports.commentOnArticle = async (req, res) => {
         } else if (result.rows.length === 0) {
             status = {
                 status: "Error",
-                message: "GIF doesnot exist"
+                message: "Article doesnot exist"
             }
             res.status(404).json(status);
         } else {
             const query2 = {
-                text: 'INSERT INTO comments ("comment","gifid","createdon", "authorid") VALUES ($1,$2,$3, $4) RETURNING *',
-                values: [comment, gifid, createdon, authorid]
+                text: 'INSERT INTO comments ("comment","articleid","createdon", "authorid") VALUES ($1,$2,$3, $4) RETURNING *',
+                values: [comment, articleid, createdon, authorid]
             }
             await pool.query(query2, (error, results) => {
                 if (error) {
@@ -117,14 +117,15 @@ exports.commentOnArticle = async (req, res) => {
                     }
                     res.status(500).json(status);
                 } else {
-                    const { commentid, gifid, createdon, comment, title } = results.rows[0]
+                    const { commentid, articleid, createdon, comment, title } = results.rows[0]
                     status = {
                         status: "Success",
                         message: "Comment Successfuly created",
                         createdon,
-                        gifTitle: title,
+                        articleTitle: title,
                         comment,
-                        commentId: commentid
+                        commentId: commentid,
+                        articleid
                     }
                     res.status(200).json(status);
                 }
