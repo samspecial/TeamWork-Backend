@@ -84,6 +84,7 @@ exports.deleteArticle = (req, res) => {
 
 exports.commentOnArticle = async (req, res) => {
     let status = {}, { comment } = req.body, articleid = parseInt(req.params.articleid);
+    console.log(articleid)
     let id = req.userId;
     const authorid = id
     const createdon = new Date()
@@ -91,15 +92,12 @@ exports.commentOnArticle = async (req, res) => {
     if (!errors.isEmpty()) {
         return res.status(422).json({ error: errors.array()[0].msg })
     }
-    // const query1 = {
-    //     text: 'SELECT * FROM articles WHERE "articleid" = $1',
-    //     values: [articleid]
-    // };
-
     const query1 = {
-        text: 'INSERT INTO comments ("comment","createdon", "authorid") VALUES ($1,$2,$3) WHERE "articleid" = "$4"',
-        values: [comment, createdon, authorid, articleid]
-    }
+        text: 'SELECT * FROM articles WHERE "articleid" = $1',
+        values: [articleid]
+    };
+
+    console.log(comment, createdon, authorid, articleid)
     await pool.query(query1, async (error, result) => {
         if (error) {
             status = {
@@ -114,12 +112,12 @@ exports.commentOnArticle = async (req, res) => {
             }
             res.status(404).json(status);
         } else {
-            console.log(comment, createdon, authorid, articleid) = result.rows[0]
+            // console.log(comment, createdon, authorid, articleid) = result.rows[0]
             const query2 = {
-                text: 'SELECT a.title, c.createdon, c.comment FROM articles a, comments c WHERE a.commentid = c.commentid;',
-                values: [title, comment, createdon]
+                text: 'INSERT INTO comments ("comment","articleid","createdon", "authorid") VALUES ($1,$2,$3, $4) RETURNING *',
+                values: [comment, articleid, createdon, authorid]
             }
-            await pool.query(query2, (error, results) => {
+            await pool.query(query2, async (error, results) => {
                 if (error) {
                     status = {
                         status: "Error",
@@ -127,17 +125,32 @@ exports.commentOnArticle = async (req, res) => {
                     }
                     res.status(500).json(status);
                 } else {
-                    const { createdon, comment, title } = results.rows
-                    status = {
-                        status: "Success",
-                        message: "Comment Successfuly created",
-                        createdon,
-                        articleTitle: title,
-                        comment,
-                        commentId: commentid,
-                        articleid
-                    }
-                    res.status(200).json(status);
+                    // const query3 = 'SELECT a.title, c.createdon, c.comment FROM articles a, comments c WHERE a.articleid = c.articleid;'
+                    const query3 = 'SELECT a.articleid, a.createdon, a.title, a.article, c.commentid, c.comment FROM articles a INNER JOIN comments c ON a.articleid = c.articleid';
+                    await pool.query(query3, (error, results) => {
+                        if (error) {
+                            status = {
+                                status: "Error",
+                                message: "Page Not Found"
+                            }
+                            res.status(404).json(status);
+                        } else {
+
+                            const { createdon, comment, title, commentid } = results.rows[0];
+                            console.log(results)
+                            console.log(createdon, comment, title, commentid);
+                            status = {
+                                status: "Success",
+                                message: "Comment Successfuly created",
+                                createdon,
+                                articleTitle: title,
+                                comment,
+                                commentId: commentid,
+                                articleid
+                            }
+                            res.status(200).json(status);
+                        }
+                    })
                 }
             })
         }

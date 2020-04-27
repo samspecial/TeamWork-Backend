@@ -1,16 +1,16 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer')
-const sendGridTransport = require('nodemailer-sendgrid-transport')
+const nodemailer = require('nodemailer');
+// const sendGridTransport = require('nodemailer-sendgrid-transport')
 
 const pool = require('../config');
 const { validationResult } = require('express-validator')
 
-const transporter = nodemailer.createTransport(sendGridTransport({
-    auth: {
-        api_key: process.env.SEND_EMAIL
-    }
-}))
+// const transporter = nodemailer.createTransport(sendGridTransport({
+//     auth: {
+//         api_key: process.env.SEND_EMAIL
+//     }
+// }))
 exports.createNewUser = (req, res, next) => {
     let status = {};
     const {
@@ -70,14 +70,14 @@ exports.createNewUser = (req, res, next) => {
                             }
                         }
                         res.status(200).json(status)
-                        return transporter.sendMail({
-                            to: email,
-                            from: 'admin@teamwork.com',
-                            subject: 'Signup Successfully',
-                            html: `<p>Hello ${firstName}, We are excited to have you signed up for our service. We hope you have a smooth ride and fun here`
-                        }).catch(err => {
-                            console.log(err);
-                        })
+                        // return transporter.sendMail({
+                        //     to: email,
+                        //     from: 'admin@teamwork.com',
+                        //     subject: 'Signup Successfully',
+                        //     html: `<p>Hello ${firstName}, We are excited to have you signed up for our service. We hope you have a smooth ride and fun here`
+                        // }).catch(err => {
+                        //     console.log(err);
+                        // })
 
                     }
                 })
