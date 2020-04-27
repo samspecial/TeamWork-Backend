@@ -8,7 +8,7 @@
         jobrole VARCHAR(50) NOT NULL,
         department VARCHAR(30) NOT NULL,
        address VARCHAR(100) NOT NULL,
-       createdon TIMESTAMP,
+       createdon DATE,
        hash TEXT NOT NULL,
        PRIMARY KEY (id),
        UNIQUE (email)

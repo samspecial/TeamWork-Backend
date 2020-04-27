@@ -3,31 +3,172 @@ const jwt = require('jsonwebtoken');
 
 const { validationResult } = require('express-validator');
 
-exports.createArticle = (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        console.log(errors.array());
-        return res.status(422).json({ error: errors.array()[0].msg })
-    }
+exports.createArticle = async (req, res) => {
     const { title, article } = req.body;
     const createdon = new Date();
-    const articleQuery = 'INSERT INTO articles (title, article, createdon) VALUES ($1,$2, $3) RETURNING *';
-    const values = [title, article, createdon]
+    let id = req.userId;
+    const authorid = id
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
+    const articleQuery = 'INSERT INTO articles (title, article, createdon,authorid) VALUES ($1,$2, $3, $4) RETURNING *';
+    const values = [title, article, createdon, authorid]
 
-    pool.query(articleQuery, values, (error, results) => {
+    await pool.query(articleQuery, values, (error, results) => {
         if (error) {
             throw error
         }
-        console.log(results.rows)
+        const { articleid, createdon, title, article, authorid } = results.rows[0]
         res.status(201).json({
             status: "Success",
             data: {
                 message: "Article Successfully Created",
-                articleid: `${results.rows[0].articleid}`,
-                createdOn: `${results.rows[0].createdon}`,
-                title: `${title}`
+                articleid: articleid,
+                createdOn: createdon,
+                title: title,
+                article: article,
+                id: authorid
             }
         })
     })
 }
 
+exports.updateArticle = (req, res) => {
+    const articleid = parseInt(req.params.articleid);
+    const { article, title } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
+    const articleQuery = 'UPDATE articles SET title = $1, article = $2 WHERE articleid = $3';
+    const values = [title, article, articleid];
+    pool.query(articleQuery, values, (error, results) => {
+        if (error) {
+            res.status(401).json({
+                status: "Failed",
+                error: "Bad request"
+            })
+        }
+        res.status(201).json({
+            status: "Success",
+            data: {
+                message: "Article Successfully Updated",
+                title: `${title}`,
+                article: `${article}`
+            }
+        })
+    })
+}
+
+exports.deleteArticle = (req, res) => {
+    const articleid = parseInt(req.params.articleid);
+    const deleteQuery = 'DELETE FROM articles WHERE articleid = $1';
+    const value = [articleid];
+
+    pool.query(deleteQuery, value, (error, results) => {
+        if (error) {
+            res.status(403).json({
+                status: error,
+                message: "Unauthorized"
+            })
+        }
+        res.status(200).json({
+            status: "Success",
+            data: {
+                message: "Article Successsfully Deleted"
+            }
+        })
+    })
+}
+
+exports.commentOnArticle = async (req, res) => {
+    let status = {}, { comment } = req.body, articleid = parseInt(req.params.articleid);
+    console.log(articleid)
+    let id = req.userId;
+    const authorid = id
+    const createdon = new Date()
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ error: errors.array()[0].msg })
+    }
+    const query1 = {
+        text: 'SELECT * FROM articles WHERE "articleid" = $1',
+        values: [articleid]
+    };
+
+    console.log(comment, createdon, authorid, articleid)
+    await pool.query(query1, async (error, result) => {
+        if (error) {
+            status = {
+                status: "Error",
+                message: "Internal server error"
+            }
+            res.status(500).json(status)
+        } else if (result.rows.length === 0) {
+            status = {
+                status: "Error",
+                message: "Article doesnot exist"
+            }
+            res.status(404).json(status);
+        } else {
+            // console.log(comment, createdon, authorid, articleid) = result.rows[0]
+            const query2 = {
+                text: 'INSERT INTO comments ("comment","articleid","createdon", "authorid") VALUES ($1,$2,$3, $4) RETURNING *',
+                values: [comment, articleid, createdon, authorid]
+            }
+            await pool.query(query2, async (error, results) => {
+                if (error) {
+                    status = {
+                        status: "Error",
+                        message: "Internal server error"
+                    }
+                    res.status(500).json(status);
+                } else {
+                    // const query3 = 'SELECT a.title, c.createdon, c.comment FROM articles a, comments c WHERE a.articleid = c.articleid;'
+                    const query3 = 'SELECT a.articleid, a.createdon, a.title, a.article, c.commentid, c.comment FROM articles a INNER JOIN comments c ON a.articleid = c.articleid';
+                    await pool.query(query3, (error, results) => {
+                        if (error) {
+                            status = {
+                                status: "Error",
+                                message: "Page Not Found"
+                            }
+                            res.status(404).json(status);
+                        } else {
+
+                            const { createdon, comment, title, commentid } = results.rows[0];
+                            console.log(results)
+                            console.log(createdon, comment, title, commentid);
+                            status = {
+                                status: "Success",
+                                message: "Comment Successfuly created",
+                                createdon,
+                                articleTitle: title,
+                                comment,
+                                commentId: commentid,
+                                articleid
+                            }
+                            res.status(200).json(status);
+                        }
+                    })
+                }
+            })
+        }
+    })
+}
+
+exports.feed = (req, res) => {
+    const feedQuery = 'SELECT a.articleid AS id, a.title, a.article, a.createdon FROM articles a UNION SELECT g.gifid, g.title, g.imageurl, g.createdon FROM gifs g ORDER BY (createdon) DESC'
+    pool.query(feedQuery, (error, results) => {
+        if (error) {
+            throw error
+        }
+        res.status(200).json({
+            status: "Success",
+            data: results.rows
+        })
+
+
+    }
+    )
+}
