@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Building Restful API for Teamweak",
   "main": "server.js",
+  "engines": {
+    "node": "10.16.3"
+  },
   "dependencies": {
     "bcrypt": "^3.0.8",
     "body-parser": "^1.19.0",
