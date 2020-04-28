@@ -3,8 +3,10 @@ CREATE TABLE comments(
         comment TEXT,
         gifid INTEGER,
         articleid INTEGER,
-        authorid INTEGER NOT NULL,
+        authorid INTEGER,
         createdon DATE,
+        
         PRIMARY KEY (commentid),
-       
+        FOREIGN KEY articleid REFERENCES comments(articleid),
+        FOREIGN KEY gifid REFERENCES comments(gifid)
     );

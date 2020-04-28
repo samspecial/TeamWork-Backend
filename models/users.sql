@@ -3,15 +3,15 @@
         id INTEGER NOT NULL,
         firstname VARCHAR(30) NOT NULL,
         lastname VARCHAR(30) NOT NULL,
-        email TEXT,
-        gender VARCHAR(30) NOT NULL,
-        jobrole VARCHAR(50) NOT NULL,
-        department VARCHAR(30) NOT NULL,
-       address VARCHAR(100) NOT NULL,
+        email TEXT NOT NULL,
+        gender VARCHAR(30),
+        jobrole VARCHAR(50),
+        department VARCHAR(30),
+       address VARCHAR(100),
        createdon DATE,
        hash TEXT NOT NULL,
-       PRIMARY KEY (id),
-       UNIQUE (email)
+       
+       PRIMARY KEY (id)
     );
 
    

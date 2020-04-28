@@ -4,5 +4,6 @@
         title VARCHAR(50),
         createdon DATE,
         publicid VARCHAR(100),
+        authorid INT,
         PRIMARY KEY (gifid)
     );
