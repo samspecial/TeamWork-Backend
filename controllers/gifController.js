@@ -111,13 +111,15 @@ const commentOnGif = async (req, res) => {
     const authorid = id
     const createdon = new Date()
     const errors = validationResult(req);
+
     if (!errors.isEmpty()) {
         return res.status(422).json({ error: errors.array()[0].msg })
     }
     const query1 = {
         text: 'SELECT * FROM gifs WHERE "gifid" = $1',
-        values: [gifid]
+        values: [articleid]
     };
+
     await pool.query(query1, async (error, result) => {
         if (error) {
             status = {
@@ -128,7 +130,7 @@ const commentOnGif = async (req, res) => {
         } else if (result.rows.length === 0) {
             status = {
                 status: "Error",
-                message: "GIF doesnot exist"
+                message: "GIF image doesnot exist"
             }
             res.status(404).json(status);
         } else {
@@ -136,7 +138,7 @@ const commentOnGif = async (req, res) => {
                 text: 'INSERT INTO comments ("comment","gifid","createdon", "authorid") VALUES ($1,$2,$3, $4) RETURNING *',
                 values: [comment, gifid, createdon, authorid]
             }
-            await pool.query(query2, (error, results) => {
+            await pool.query(query2, async (error, results) => {
                 if (error) {
                     status = {
                         status: "Error",
@@ -144,16 +146,29 @@ const commentOnGif = async (req, res) => {
                     }
                     res.status(500).json(status);
                 } else {
-                    const { commentid, gifid, createdon, comment, title } = results.rows[0]
-                    status = {
-                        status: "Success",
-                        message: "Comment Successfuly created",
-                        createdon,
-                        gifTitle: title,
-                        comment,
-                        commentId: commentid
-                    }
-                    res.status(200).json(status);
+                    const query3 = 'SELECT g.gifid, g.createdon, g.title, g.imageurl, c.commentid, c.comment FROM gifs g INNER JOIN comments c ON g.gifid = c.articleid';
+                    await pool.query(query3, (error, results) => {
+                        if (error) {
+                            status = {
+                                status: "Error",
+                                message: "Resource Not Found"
+                            }
+                            res.status(404).json(status);
+                        } else {
+
+                            const { createdon, comment, title, commentid } = results.rows[0];
+                            status = {
+                                status: "Success",
+                                message: "Comment Successfuly created",
+                                createdon,
+                                gifTitle: title,
+                                comment,
+                                commentId: commentid,
+                                gifid
+                            }
+                            res.status(200).json(status);
+                        }
+                    })
                 }
             })
         }

@@ -112,7 +112,6 @@ exports.commentOnArticle = async (req, res) => {
             }
             res.status(404).json(status);
         } else {
-            // console.log(comment, createdon, authorid, articleid) = result.rows[0]
             const query2 = {
                 text: 'INSERT INTO comments ("comment","articleid","createdon", "authorid") VALUES ($1,$2,$3, $4) RETURNING *',
                 values: [comment, articleid, createdon, authorid]
@@ -125,13 +124,12 @@ exports.commentOnArticle = async (req, res) => {
                     }
                     res.status(500).json(status);
                 } else {
-                    // const query3 = 'SELECT a.title, c.createdon, c.comment FROM articles a, comments c WHERE a.articleid = c.articleid;'
                     const query3 = 'SELECT a.articleid, a.createdon, a.title, a.article, c.commentid, c.comment FROM articles a INNER JOIN comments c ON a.articleid = c.articleid';
                     await pool.query(query3, (error, results) => {
                         if (error) {
                             status = {
                                 status: "Error",
-                                message: "Page Not Found"
+                                message: "Resource Not Found"
                             }
                             res.status(404).json(status);
                         } else {
