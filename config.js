@@ -3,8 +3,6 @@ require('dotenv').config();
 
 const { Pool } = require('pg');
 
-console.log(`This is a ${process.env.NODE_ENV} environment`);
-
 let pool;
 const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`;
 const testConnectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/employees`;
@@ -12,7 +10,9 @@ const testConnectionString = `postgresql://${process.env.DB_USER}:${process.env.
 if (process.env.NODE_ENV === 'production') {
     pool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: process.env.NODE_ENV === 'production'
+        ssl: {
+            rejectUnauthorized: true,
+        },
     });
 } else if (process.env.NODE_ENV === 'test') {
     pool = new Pool({
