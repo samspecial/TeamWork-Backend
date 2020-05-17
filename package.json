@@ -31,7 +31,8 @@
   "scripts": {
     "lint": "./node_modules/.bin/eslint",
     "test": "mocha ./test --timeout 100000 --exit",
-    "preinstall": "npx npm-force-resolutions"
+    "preinstall": "npx npm-force-resolutions",
+    "start": "nodemon server.js"
   },
   "repository": {
     "type": "git",
